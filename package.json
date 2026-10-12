@@ -1,0 +1,21 @@
+{
+  "name": "conciliacion-de-pagos",
+  "version": "1.0.0",
+  "description": "Demo de conciliación de pagos con OCR + n8n + Postgres + Ollama",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "pg": "^8.11.5",
+    "multer": "^1.4.5-lts.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
+}

@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tesorería · Conciliación de Pagos</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <!-- ============ HEADER ============ -->
+  <header class="app-header">
+    <div class="brand">
+      <span class="dot"></span>
+      <h1>Tesorería · Conciliación</h1>
+    </div>
+    <nav class="tabs">
+      <button class="tab-btn active" data-tab="upload">Subir comprobante</button>
+      <button class="tab-btn" data-tab="dashboard">Tablero</button>
+      <button class="tab-btn" data-tab="ia">Recomendaciones IA</button>
+    </nav>
+  </header>
+
+  <!-- ============ TAB 1: SUBIR COMPROBANTE ============ -->
+  <section id="tab-upload" class="tab-panel active">
+    <div class="card upload-card">
+      <h2>Subir comprobante de pago</h2>
+      <p class="hint">
+        Sube un PDF con un comprobante de transferencia. El sistema extraerá
+        los datos con OCR y los conciliará contra el ERP automáticamente.
+      </p>
+
+      <label class="field-label" for="cliente-select">Cliente</label>
+      <select id="cliente-select" class="field-select">
+        <option value="11111111-1111-1111-1111-111111111111">Tesorería Demo SA de CV</option>
+        <option value="11111111-1111-1111-1111-111111111112">Grupo Industrial del Norte SA de CV</option>
+        <option value="11111111-1111-1111-1111-111111111113">Comercializadora del Bajío SA de CV</option>
+        <option value="11111111-1111-1111-1111-111111111114">Servicios Logísticos del Pacífico SA de CV</option>
+        <option value="11111111-1111-1111-1111-111111111115">Distribuidora Peninsular SA de CV</option>
+      </select>
+
+      <div id="drop-zone" class="drop-zone">
+        <input type="file" id="file-input" accept="application/pdf" hidden>
+        <svg class="icon-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        <p><strong>Arrastra tu PDF aquí</strong> o haz clic para seleccionar</p>
+        <span class="file-name" id="file-name">Ningún archivo seleccionado</span>
+      </div>
+
+      <div id="pdf-preview" class="pdf-preview hidden">
+        <iframe id="pdf-frame" title="Vista previa del comprobante"></iframe>
+      </div>
+
+      <button id="btn-submit" class="btn-primary" disabled>
+        Enviar y conciliar
+      </button>
+
+      <div id="resultado" class="resultado hidden"></div>
+    </div>
+  </section>
+
+  <!-- ============ TAB 2: TABLERO ============ -->
+  <section id="tab-dashboard" class="tab-panel">
+    <div class="card" style="margin-bottom: 20px;">
+      <label class="field-label" for="cliente-tablero">Cliente</label>
+      <select id="cliente-tablero" class="field-select" style="margin-bottom: 0;">
+        <option value="11111111-1111-1111-1111-111111111111">Tesorería Demo SA de CV</option>
+        <option value="11111111-1111-1111-1111-111111111112">Grupo Industrial del Norte SA de CV</option>
+        <option value="11111111-1111-1111-1111-111111111113">Comercializadora del Bajío SA de CV</option>
+        <option value="11111111-1111-1111-1111-111111111114">Servicios Logísticos del Pacífico SA de CV</option>
+        <option value="11111111-1111-1111-1111-111111111115">Distribuidora Peninsular SA de CV</option>
+      </select>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <span class="kpi-label">Total movimientos</span>
+        <span class="kpi-value" id="kpi-total">—</span>
+        <span class="kpi-delta" id="kpi-total-sub"></span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Conciliados</span>
+        <span class="kpi-value kpi-green" id="kpi-conciliados">—</span>
+        <span class="kpi-delta" id="kpi-conciliados-delta"></span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">En excepción</span>
+        <span class="kpi-value kpi-red" id="kpi-excepciones">—</span>
+        <span class="kpi-delta" id="kpi-excepciones-delta"></span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Tasa de conciliación</span>
+        <span class="kpi-value" id="kpi-tasa">—</span>
+        <span class="kpi-delta">conciliados / total</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Monto conciliado</span>
+        <span class="kpi-value kpi-green" id="kpi-monto">—</span>
+        <span class="kpi-delta" id="kpi-monto-delta"></span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Monto en discrepancia</span>
+        <span class="kpi-value kpi-yellow" id="kpi-discrepancia">—</span>
+        <span class="kpi-delta">pendiente de aclaración</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Tiempo prom. conciliación</span>
+        <span class="kpi-value" id="kpi-tiempo">—</span>
+        <span class="kpi-delta">segundos</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Tiempo máximo</span>
+        <span class="kpi-value kpi-yellow" id="kpi-tiempo-max">—</span>
+        <span class="kpi-delta">segundos</span>
+      </div>
+    </div>
+
+    <div class="charts-grid">
+      <div class="card">
+        <h3>Composición por resultado</h3>
+        <canvas id="chart-resultado"></canvas>
+      </div>
+      <div class="card">
+        <h3>Top causas de excepción</h3>
+        <canvas id="chart-causas"></canvas>
+      </div>
+      <div class="card">
+        <h3>Monto conciliado vs discrepancia</h3>
+        <canvas id="chart-montos"></canvas>
+      </div>
+      <div class="card">
+        <h3>Tendencia de conciliaciones (últimos 30 días)</h3>
+        <canvas id="chart-tendencia"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Movimientos recientes</h3>
+      <table id="tabla-movimientos">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Referencia</th>
+            <th>Monto</th>
+            <th>Tipo</th>
+            <th>Resultado</th>
+            <th>Causa</th>
+            <th>Tiempo (s)</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ TAB 3: RECOMENDACIONES IA ============ -->
+  <section id="tab-ia" class="tab-panel">
+    <div class="ia-header">
+      <div>
+        <h2 class="ia-title">🤖 Recomendaciones IA <span class="badge-ia">Ollama local</span></h2>
+        <p class="hint">Análisis de causas de excepción y acciones para mejorar la conciliación</p>
+      </div>
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+        <label class="field-label" for="cliente-ia" style="margin:0;">Cliente</label>
+        <select id="cliente-ia" class="field-select" style="margin:0;width:auto;min-width:260px;">
+          <option value="11111111-1111-1111-1111-111111111111">Tesorería Demo SA de CV</option>
+          <option value="11111111-1111-1111-1111-111111111112">Grupo Industrial del Norte SA de CV</option>
+          <option value="11111111-1111-1111-1111-111111111113">Comercializadora del Bajío SA de CV</option>
+          <option value="11111111-1111-1111-1111-111111111114">Servicios Logísticos del Pacífico SA de CV</option>
+          <option value="11111111-1111-1111-1111-111111111115">Distribuidora Peninsular SA de CV</option>
+        </select>
+        <button id="btn-ia-refresh" class="btn-ia">🔄 Generar análisis</button>
+      </div>
+    </div>
+
+    <div id="ia-loading" class="ia-spinner-wrap hidden">
+      <div class="ia-spinner"></div>
+      <p>Consultando a Ollama local… Esto puede tardar 10–30 segundos.</p>
+    </div>
+
+    <div id="ia-error"></div>
+
+    <div id="ia-content" class="hidden">
+      <div class="stats-mini" id="ia-stats"></div>
+
+      <div class="ia-resumen">
+        <h3>📋 Diagnóstico general</h3>
+        <p id="ia-resumen-texto">—</p>
+      </div>
+
+      <h3 class="ia-section-title">💡 Recomendaciones</h3>
+      <div class="rec-grid" id="ia-recomendaciones"></div>
+
+      <h3 class="ia-section-title">⚡ Quick wins</h3>
+      <div class="list-card"><ul id="ia-quick-wins"></ul></div>
+
+      <h3 class="ia-section-title">⚠️ Riesgos a monitorear</h3>
+      <div class="list-card"><ul id="ia-riesgos"></ul></div>
+    </div>
+  </section>
+
+  <!-- ============ SCRIPTS ============ -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/form.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+</html>

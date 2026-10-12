@@ -1,0 +1,51 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: conciliacion-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: tesoreria
+      POSTGRES_USER: n8n
+      POSTGRES_PASSWORD: n8n123
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5436:5432"
+    networks:
+      - conciliacion
+
+  app:
+    build: .
+    image: conciliacion-app
+    container_name: conciliacion-app
+    restart: unless-stopped
+    environment:
+      PORT: 5000
+      PG_HOST: postgres
+      PG_PORT: 5432
+      PG_DATABASE: tesoreria
+      PG_USER: n8n
+      PG_PASSWORD: n8n123
+      N8N_WEBHOOK_URL: http://creditoflow-n8n:5678/webhook/conciliacion-de-pagos
+      OLLAMA_URL: http://host.docker.internal:11434/api/generate
+      OLLAMA_MODEL: llama3
+      CLIENTE_ID: 11111111-1111-1111-1111-111111111111
+    ports:
+      - "8014:5000"
+    volumes:
+      - uploads_data:/app/uploads
+    depends_on:
+      - postgres
+    networks:
+      - conciliacion
+      - creditoflow
+
+volumes:
+  postgres_data:
+  uploads_data:
+
+networks:
+  conciliacion:
+    driver: bridge
+  creditoflow:
+    external: true
