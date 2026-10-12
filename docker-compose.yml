@@ -49,3 +49,4 @@ networks:
     driver: bridge
   creditoflow:
     external: true
+    name: creditoflow_creditoflow
