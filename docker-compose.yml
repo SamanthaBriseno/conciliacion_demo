@@ -27,7 +27,7 @@ services:
       PG_USER: n8n
       PG_PASSWORD: n8n123
       N8N_WEBHOOK_URL: http://creditoflow-n8n:5678/webhook/conciliacion-de-pagos
-      OLLAMA_URL: http://host.docker.internal:11434/api/generate
+      OLLAMA_URL: http://172.31.0.1:11434/api/generate
       OLLAMA_MODEL: llama3
       CLIENTE_ID: 11111111-1111-1111-1111-111111111111
     ports:
