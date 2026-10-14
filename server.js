@@ -402,6 +402,62 @@ Sé específico. Menciona las causas principales y sugiere acciones concretas de
 });
 
 // ============================================================
+// ENDPOINT 5: Reset demo
+// ============================================================
+app.post('/api/reset-demo', async (req, res) => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    await client.query(`
+      DELETE FROM resultados_conciliacion
+      WHERE conciliacion_id IN (
+        SELECT c.conciliacion_id FROM conciliaciones c
+        JOIN erp_cxc_cxp e ON e.erp_id = c.erp_id
+        WHERE e.folio_factura LIKE 'DEMO-%'
+      )`);
+
+    await client.query(`
+      DELETE FROM conciliaciones
+      WHERE erp_id IN (SELECT erp_id FROM erp_cxc_cxp WHERE folio_factura LIKE 'DEMO-%')`);
+
+    await client.query(`
+      DELETE FROM movimientos_bancarios
+      WHERE referencia IN ('REF-1001','REF-1004','REF-1006','REF-1010')`);
+
+    await client.query(`
+      UPDATE erp_cxc_cxp SET estatus = 'pendiente'
+      WHERE folio_factura LIKE 'DEMO-%'`);
+
+    const facturas = await client.query(`
+      SELECT folio_factura, referencia_esperada, monto, estatus
+      FROM erp_cxc_cxp WHERE folio_factura LIKE 'DEMO-%'
+      ORDER BY folio_factura`);
+
+    const [conciliaciones, resultados] = await Promise.all([
+      client.query(`SELECT COUNT(*) AS total FROM conciliaciones`),
+      client.query(`SELECT COUNT(*) AS total FROM resultados_conciliacion`),
+    ]);
+
+    await client.query('COMMIT');
+    console.log('🔄 Reset demo ejecutado');
+
+    res.json({
+      ok: true,
+      facturas_demo: facturas.rows,
+      conciliaciones_historicas: Number(conciliaciones.rows[0].total),
+      resultados_historicos: Number(resultados.rows[0].total),
+    });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('❌ Error reset demo:', err.message);
+    res.status(500).json({ error: err.message });
+  } finally {
+    client.release();
+  }
+});
+
+// ============================================================
 // INICIO
 // ============================================================
 app.listen(PORT, () => {

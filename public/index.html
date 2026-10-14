@@ -18,6 +18,7 @@
       <button class="tab-btn active" data-tab="upload">Subir comprobante</button>
       <button class="tab-btn" data-tab="dashboard">Tablero</button>
       <button class="tab-btn" data-tab="ia">Recomendaciones IA</button>
+      <button class="tab-btn" data-tab="config">Configuración</button>
     </nav>
   </header>
 
@@ -239,6 +240,34 @@
 
       <h3 class="ia-section-title">⚠️ Riesgos a monitorear</h3>
       <div class="list-card"><ul id="ia-riesgos"></ul></div>
+    </div>
+  </section>
+
+  <!-- ============ TAB 4: CONFIGURACIÓN ============ -->
+  <section id="tab-config" class="tab-panel">
+    <h2 style="margin-bottom:8px">Configuración</h2>
+    <p class="hint" style="margin-bottom:32px">Herramientas de administración y preparación del entorno.</p>
+
+    <div class="config-section">
+      <div class="config-section-header">
+        <span class="config-icon">🎬</span>
+        <div>
+          <h3>Reset de datos demo</h3>
+          <p class="hint" style="margin:0">Borra los movimientos y conciliaciones de los 4 casos de demo, y regresa las facturas DEMO-* a estado <code>pendiente</code>. Los datos históricos no se tocan.</p>
+        </div>
+      </div>
+
+      <div class="config-demo-facturas" id="config-facturas-preview">
+        <p class="hint" style="text-align:center;padding:16px 0">Haz clic en <strong>Ejecutar reset</strong> para ver el estado de las facturas demo.</p>
+      </div>
+
+      <div class="config-actions">
+        <button id="btn-reset-demo" class="btn-reset">
+          🔄 Ejecutar reset de demo
+        </button>
+      </div>
+
+      <div id="config-reset-result" class="hidden"></div>
     </div>
   </section>
 

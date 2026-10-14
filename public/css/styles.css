@@ -504,6 +504,70 @@ th {
 .stat-warn { color: var(--warn) !important; }
 
 /* ============================================================
+   CONFIGURACIÓN
+   ============================================================ */
+.config-section {
+  background: var(--bg-800);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px;
+  margin-bottom: 20px;
+}
+.config-section-header {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+.config-icon { font-size: 28px; line-height: 1; margin-top: 2px; }
+.config-section-header h3 { font-size: 16px; margin-bottom: 6px; }
+
+.config-demo-facturas {
+  background: var(--bg-700);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+  overflow-x: auto;
+}
+
+.config-actions { display: flex; gap: 12px; margin-bottom: 16px; }
+
+.btn-reset {
+  padding: 11px 24px;
+  background: rgba(231,76,60,.1);
+  color: var(--err);
+  border: 1px solid rgba(231,76,60,.3);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .2s;
+}
+.btn-reset:hover { background: rgba(231,76,60,.2); border-color: var(--err); }
+.btn-reset:disabled { opacity: .5; cursor: not-allowed; }
+
+.config-result-ok,
+.config-result-err {
+  padding: 14px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.config-result-ok  { background: rgba(46,204,113,.08); border: 1px solid rgba(46,204,113,.25); color: var(--ok); }
+.config-result-err { background: rgba(231,76,60,.08);  border: 1px solid rgba(231,76,60,.25);  color: var(--err); }
+.config-stat {
+  color: var(--text-dim);
+  font-size: 12px;
+  padding: 3px 10px;
+  background: var(--bg-700);
+  border-radius: 4px;
+}
+
+/* ============================================================
    UTILIDADES
    ============================================================ */
 .hidden { display: none !important; }

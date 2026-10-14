@@ -352,3 +352,52 @@ document.querySelectorAll('.tab-btn').forEach((btn) => {
     btn.addEventListener('click', cargarIAGuardada);
   }
 });
+
+// ---------- Reset demo ----------
+document.getElementById('btn-reset-demo')?.addEventListener('click', async () => {
+  const btn = document.getElementById('btn-reset-demo');
+  const result = document.getElementById('config-reset-result');
+  const preview = document.getElementById('config-facturas-preview');
+
+  if (!confirm('¿Ejecutar reset de demo? Se borrarán los movimientos y conciliaciones de los casos DEMO-*.')) return;
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Ejecutando...';
+  result.classList.add('hidden');
+
+  try {
+    const r = await fetch(API_RESET_DEMO, { method: 'POST' });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const data = await r.json();
+
+    // Tabla de facturas demo
+    const filas = (data.facturas_demo || []).map(f => `
+      <tr>
+        <td>${f.folio_factura}</td>
+        <td>${f.referencia_esperada}</td>
+        <td>${formatMXN(f.monto)}</td>
+        <td><span class="badge-resultado conciliado" style="background:rgba(46,204,113,.15);color:var(--ok)">&#10003; ${f.estatus}</span></td>
+      </tr>`).join('');
+
+    preview.innerHTML = `
+      <table>
+        <thead><tr><th>Folio</th><th>Referencia esperada</th><th>Monto</th><th>Estatus</th></tr></thead>
+        <tbody>${filas}</tbody>
+      </table>`;
+
+    result.className = 'config-result-ok';
+    result.innerHTML = `
+      ✅ <strong>Reset ejecutado correctamente.</strong>
+      <span class="config-stat">Conciliaciones históricas: <strong>${data.conciliaciones_historicas}</strong></span>
+      <span class="config-stat">Resultados históricos: <strong>${data.resultados_historicos}</strong></span>`;
+    result.classList.remove('hidden');
+
+  } catch (err) {
+    result.className = 'config-result-err';
+    result.innerHTML = `❌ <strong>Error:</strong> ${err.message}`;
+    result.classList.remove('hidden');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🔄 Ejecutar reset de demo';
+  }
+});
