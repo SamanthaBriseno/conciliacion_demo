@@ -183,9 +183,49 @@
 
     <div id="ia-error"></div>
 
+    <div id="ia-empty" class="ia-empty-state hidden">
+      <div class="ia-empty-icon">🤖</div>
+      <p>No hay análisis previos para este cliente.</p>
+      <p class="hint">Haz clic en <strong>Generar análisis</strong> para crear el primero.</p>
+    </div>
+
     <div id="ia-content" class="hidden">
+
+      <!-- Fecha del análisis -->
+      <div class="ia-fecha-row">
+        <span id="ia-fecha-badge" class="ia-fecha-badge hidden"></span>
+      </div>
+
+      <!-- Stats mini -->
       <div class="stats-mini" id="ia-stats"></div>
 
+      <!-- Barra de tasa de conciliación -->
+      <div class="ia-tasa-wrap">
+        <div class="ia-tasa-header">
+          <span>📊 Tasa de conciliación automática</span>
+          <span id="ia-tasa-label"></span>
+        </div>
+        <div class="ia-tasa-bar">
+          <div id="ia-tasa-bar-fill" class="ia-tasa-bar-fill"></div>
+        </div>
+      </div>
+
+      <!-- Tabla de causas de excepción -->
+      <div class="card" style="margin-bottom:24px">
+        <h3>⚠️ Causas de excepción detectadas</h3>
+        <table id="ia-causas-tabla">
+          <thead>
+            <tr>
+              <th>Causa</th>
+              <th>Casos</th>
+              <th>Monto en riesgo</th>
+            </tr>
+          </thead>
+          <tbody id="ia-causas-body"></tbody>
+        </table>
+      </div>
+
+      <!-- Diagnóstico -->
       <div class="ia-resumen">
         <h3>📋 Diagnóstico general</h3>
         <p id="ia-resumen-texto">—</p>

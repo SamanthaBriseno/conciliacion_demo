@@ -184,16 +184,41 @@ function agruparPorFecha(movs) {
 }
 
 // ---------- Recomendaciones IA ----------
+async function cargarIAGuardada() {
+  const clienteId = document.getElementById('cliente-ia').value;
+  const content = document.getElementById('ia-content');
+  const errBox  = document.getElementById('ia-error');
+  const empty   = document.getElementById('ia-empty');
+  errBox.innerHTML = '';
+  try {
+    const r = await fetch(`${API_IA}?cliente_id=${clienteId}`);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const data = await r.json();
+    if (!data) {
+      content.classList.add('hidden');
+      empty.classList.remove('hidden');
+      return;
+    }
+    empty.classList.add('hidden');
+    renderIA(data, false);
+    content.classList.remove('hidden');
+  } catch (err) {
+    errBox.innerHTML = `<div class="ia-error-box">❌ Error cargando análisis guardado: ${err.message}</div>`;
+  }
+}
+
 async function cargarIA() {
   const clienteId = document.getElementById('cliente-ia').value;
   const btn     = document.getElementById('btn-ia-refresh');
   const loading = document.getElementById('ia-loading');
   const content = document.getElementById('ia-content');
   const errBox  = document.getElementById('ia-error');
+  const empty   = document.getElementById('ia-empty');
 
   btn.disabled = true;
   loading.classList.remove('hidden');
   content.classList.add('hidden');
+  empty.classList.add('hidden');
   errBox.innerHTML = '';
 
   try {
@@ -204,7 +229,7 @@ async function cargarIA() {
     });
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     const data = await r.json();
-    renderIA(data);
+    renderIA(data, true);
     content.classList.remove('hidden');
   } catch (err) {
     errBox.innerHTML = `<div class="ia-error-box">❌ <strong>Error:</strong> ${err.message}<br><small>Asegúrate de que Ollama esté corriendo: <code>ollama serve</code></small></div>`;
@@ -214,41 +239,91 @@ async function cargarIA() {
   }
 }
 
-function renderIA(data) {
+function renderIA(data, esNuevo) {
   const fmt = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 });
   const total = data.total || 0;
-  const tasa  = total > 0 ? ((data.conciliados / total) * 100).toFixed(1) : '0.0';
+  const tasa  = data.tasa_conciliacion ?? (total > 0 ? ((data.conciliados / total) * 100).toFixed(1) : '0.0');
+  const causas = data.causas || [];
 
-  // Stats mini
+  // Badge de fecha
+  const fechaEl = document.getElementById('ia-fecha-badge');
+  if (data.created_at) {
+    const d = new Date(data.created_at);
+    const label = esNuevo ? 'Generado ahora' : `Último análisis: ${d.toLocaleDateString('es-MX', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' })}`;
+    fechaEl.textContent = label;
+    fechaEl.classList.remove('hidden');
+  } else {
+    fechaEl.classList.add('hidden');
+  }
+
+  // Stats mini — ahora incluye monto en excepción y tasa visual
+  const montoExc = causas.reduce((s, c) => s + Number(c.monto || 0), 0);
   document.getElementById('ia-stats').innerHTML = `
-    <div class="stat-mini"><div class="l">Total movimientos</div><div class="v">${total}</div></div>
-    <div class="stat-mini"><div class="l">Conciliados</div><div class="v" style="color:var(--ok)">${data.conciliados || 0}</div></div>
-    <div class="stat-mini"><div class="l">Excepciones</div><div class="v" style="color:var(--warn)">${data.excepciones || 0}</div></div>
-    <div class="stat-mini"><div class="l">Tasa conciliación</div><div class="v">${tasa}%</div></div>
-    ${(data.causas || []).slice(0, 2).map(c =>
-      `<div class="stat-mini"><div class="l">${c.causa}</div><div class="v" style="color:var(--err)">${c.total}</div></div>`
-    ).join('')}
+    <div class="stat-mini">
+      <div class="l">Total movimientos</div>
+      <div class="v">${total}</div>
+    </div>
+    <div class="stat-mini">
+      <div class="l">Conciliados</div>
+      <div class="v" style="color:var(--ok)">${data.conciliados || 0}</div>
+    </div>
+    <div class="stat-mini">
+      <div class="l">Excepciones</div>
+      <div class="v" style="color:var(--warn)">${data.excepciones || 0}</div>
+    </div>
+    <div class="stat-mini">
+      <div class="l">Tasa conciliación</div>
+      <div class="v ${Number(tasa) >= 70 ? 'stat-ok' : 'stat-warn'}">${tasa}%</div>
+    </div>
+    <div class="stat-mini">
+      <div class="l">Monto en excepción</div>
+      <div class="v" style="color:var(--err)">${fmt.format(montoExc)}</div>
+    </div>
+    <div class="stat-mini">
+      <div class="l">Periodo analizado</div>
+      <div class="v" style="font-size:1em">${data.periodo || '—'}</div>
+    </div>
   `;
+
+  // Barra de progreso de tasa
+  document.getElementById('ia-tasa-bar-fill').style.width = `${Math.min(Number(tasa), 100)}%`;
+  document.getElementById('ia-tasa-bar-fill').style.background = Number(tasa) >= 70 ? 'var(--ok)' : 'var(--warn)';
+  document.getElementById('ia-tasa-label').textContent = `${tasa}% de conciliación automática`;
+
+  // Tabla de causas
+  const causasHtml = causas.length === 0
+    ? '<tr><td colspan="3" style="color:var(--text-dim);text-align:center">Sin excepciones registradas</td></tr>'
+    : causas.map(c => {
+        const pct = total > 0 ? ((Number(c.total) / total) * 100).toFixed(1) : 0;
+        return `<tr>
+          <td>${c.causa}</td>
+          <td><span class="badge-causa">${c.total}</span> <span style="color:var(--text-dim);font-size:11px">(${pct}%)</span></td>
+          <td style="color:var(--err)">${fmt.format(Number(c.monto || 0))}</td>
+        </tr>`;
+      }).join('');
+  document.getElementById('ia-causas-body').innerHTML = causasHtml;
 
   // Resumen
   document.getElementById('ia-resumen-texto').textContent = data.resumen || 'Sin diagnóstico disponible.';
 
-  // Recomendaciones
+  // Recomendaciones con número de orden y color de borde por impacto
   const recs = data.recomendaciones || [];
   document.getElementById('ia-recomendaciones').innerHTML = recs.length === 0
     ? '<div class="rec-card"><p>Sin recomendaciones generadas.</p></div>'
     : recs.map((r, i) => {
-        const texto = typeof r === 'string' ? r : (r.descripcion || r.titulo || JSON.stringify(r));
-        const titulo = typeof r === 'object' && r.titulo ? r.titulo : `Recomendación ${i + 1}`;
-        const impacto = (typeof r === 'object' && r.impacto) ? r.impacto.toLowerCase() : 'medio';
+        const texto   = typeof r === 'string' ? r : (r.descripcion || r.titulo || JSON.stringify(r));
+        const titulo  = typeof r === 'object' && r.titulo ? r.titulo : `Recomendación ${i + 1}`;
+        const impacto  = (typeof r === 'object' && r.impacto)  ? r.impacto.toLowerCase()  : 'medio';
         const esfuerzo = (typeof r === 'object' && r.esfuerzo) ? r.esfuerzo.toLowerCase() : 'medio';
+        const borderColor = impacto === 'alto' ? 'var(--err)' : impacto === 'medio' ? 'var(--warn)' : 'var(--ok)';
         return `
-          <div class="rec-card">
+          <div class="rec-card" style="border-left:3px solid ${borderColor}">
+            <div class="rec-num">${i + 1}</div>
             <h4>${titulo}</h4>
-            <p>${typeof r === 'string' ? r : texto}</p>
+            <p>${texto}</p>
             <div class="rec-tags">
-              <span class="rec-tag ${impacto}">Impacto: ${impacto}</span>
-              <span class="rec-tag ${esfuerzo}">Esfuerzo: ${esfuerzo}</span>
+              <span class="rec-tag ${impacto}">💥 Impacto: ${impacto}</span>
+              <span class="rec-tag esfuerzo-${esfuerzo}">⏱ Esfuerzo: ${esfuerzo}</span>
             </div>
           </div>`;
       }).join('');
@@ -269,3 +344,11 @@ function renderIA(data) {
 // ---------- Eventos ----------
 document.getElementById('cliente-tablero')?.addEventListener('change', cargarDashboard);
 document.getElementById('btn-ia-refresh')?.addEventListener('click', cargarIA);
+document.getElementById('cliente-ia')?.addEventListener('change', cargarIAGuardada);
+
+// Cargar última recomendación al abrir el tab IA
+document.querySelectorAll('.tab-btn').forEach((btn) => {
+  if (btn.dataset.tab === 'ia') {
+    btn.addEventListener('click', cargarIAGuardada);
+  }
+});

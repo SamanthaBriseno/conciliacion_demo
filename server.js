@@ -209,7 +209,55 @@ app.get('/api/movimientos', async (req, res) => {
 });
 
 // ============================================================
-// ENDPOINT 4: Recomendaciones IA
+// ENDPOINT 4a: Última recomendación guardada
+// ============================================================
+app.get('/api/ia-recomendaciones', async (req, res) => {
+  const clienteId = req.query.cliente_id || CLIENTE_ID_DEFAULT;
+  try {
+    const result = await pool.query(
+      `SELECT r.*,
+        (SELECT COUNT(*) FILTER (WHERE resultado='conciliado') FROM resultados_conciliacion WHERE cliente_id=$1::uuid) AS conciliados,
+        (SELECT COUNT(*) FILTER (WHERE resultado='excepcion')  FROM resultados_conciliacion WHERE cliente_id=$1::uuid) AS excepciones,
+        (SELECT COUNT(*)                                        FROM resultados_conciliacion WHERE cliente_id=$1::uuid) AS total,
+        (SELECT json_agg(q) FROM (
+          SELECT causa_excepcion AS causa, COUNT(*) AS total, COALESCE(SUM(monto_discrepancia),0) AS monto
+          FROM resultados_conciliacion
+          WHERE cliente_id=$1::uuid AND causa_excepcion IS NOT NULL
+          GROUP BY causa_excepcion ORDER BY total DESC
+        ) q) AS causas
+       FROM recomendaciones_ia r
+       WHERE r.cliente_id=$1::uuid
+       ORDER BY r.created_at DESC LIMIT 1`,
+      [clienteId]
+    );
+    if (result.rows.length === 0) return res.json(null);
+    const row = result.rows[0];
+    let recs = row.recomendaciones;
+    if (typeof recs === 'string') { try { recs = JSON.parse(recs); } catch(e) { recs = []; } }
+    const total = Number(row.total) || 0;
+    const conciliados = Number(row.conciliados) || 0;
+    res.json({
+      resumen: row.resumen,
+      recomendaciones: Array.isArray(recs) ? recs : [],
+      quick_wins: row.quick_wins || [],
+      riesgos: row.riesgos || [],
+      modelo: row.modelo,
+      causas: row.causas || [],
+      total,
+      conciliados,
+      excepciones: Number(row.excepciones) || 0,
+      tasa_conciliacion: total > 0 ? Number(((conciliados / total) * 100).toFixed(1)) : 0,
+      created_at: row.created_at,
+      periodo: row.periodo,
+    });
+  } catch (err) {
+    console.error('❌ Error IA GET:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============================================================
+// ENDPOINT 4b: Generar nueva recomendación IA
 // ============================================================
 app.post('/api/ia-recomendaciones', async (req, res) => {
   const clienteId = req.body.cliente_id || CLIENTE_ID_DEFAULT;
