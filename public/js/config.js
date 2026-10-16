@@ -19,6 +19,7 @@ const formatMXN = (n) =>
 
 const formatFecha = (iso) => {
   if (!iso) return '—';
-  const d = new Date(iso);
-  return d.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
+  const [y, m, d] = String(iso).slice(0, 10).split('-').map(Number);
+  const fecha = new Date(y, m - 1, d);
+  return fecha.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
 };
