@@ -76,6 +76,7 @@ function pintarTabla(movs) {
       <td>${formatFecha(m.fecha)}</td>
       <td>${formatFecha(m.fecha_emision)}</td>
       <td>${formatFecha(m.fecha_vencimiento)}</td>
+      <td>${formatFecha(m.created_at)}</td>
       <td>${m.referencia || '—'}</td>
       <td>${formatMXN(m.monto)}</td>
       <td>${m.tipo || '—'}</td>

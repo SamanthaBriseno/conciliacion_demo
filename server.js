@@ -183,6 +183,7 @@ app.get('/api/movimientos', async (req, res) => {
     const query = `
       SELECT
         m.fecha,
+        m.created_at,
         m.referencia,
         m.monto,
         m.tipo,
