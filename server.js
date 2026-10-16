@@ -409,14 +409,21 @@ app.post('/api/reset-demo', async (req, res) => {
   try {
     await client.query('BEGIN');
 
+    // 1. Borrar resultados_conciliacion ligados a conciliaciones DEMO
+    //    (por erp_id de facturas DEMO o por movimiento_id de movimientos DEMO)
     await client.query(`
       DELETE FROM resultados_conciliacion
       WHERE conciliacion_id IN (
         SELECT c.conciliacion_id FROM conciliaciones c
-        JOIN erp_cxc_cxp e ON e.erp_id = c.erp_id
+        LEFT JOIN erp_cxc_cxp e ON e.erp_id = c.erp_id
         WHERE e.folio_factura LIKE 'DEMO-%'
+           OR c.movimiento_id IN (
+             SELECT movimiento_id FROM movimientos_bancarios
+             WHERE referencia IN ('REF-1001','REF-1004','REF-1006','REF-1010')
+           )
       )`);
 
+    // 2. Borrar conciliaciones DEMO
     await client.query(`
       DELETE FROM conciliaciones
       WHERE erp_id IN (SELECT erp_id FROM erp_cxc_cxp WHERE folio_factura LIKE 'DEMO-%')
@@ -425,10 +432,12 @@ app.post('/api/reset-demo', async (req, res) => {
            WHERE referencia IN ('REF-1001','REF-1004','REF-1006','REF-1010')
          )`);
 
+    // 3. Borrar movimientos bancarios DEMO
     await client.query(`
       DELETE FROM movimientos_bancarios
       WHERE referencia IN ('REF-1001','REF-1004','REF-1006','REF-1010')`);
 
+    // 4. Regresar facturas DEMO a pendiente
     await client.query(`
       UPDATE erp_cxc_cxp SET estatus = 'pendiente'
       WHERE folio_factura LIKE 'DEMO-%'`);
