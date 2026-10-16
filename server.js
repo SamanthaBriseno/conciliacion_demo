@@ -419,7 +419,11 @@ app.post('/api/reset-demo', async (req, res) => {
 
     await client.query(`
       DELETE FROM conciliaciones
-      WHERE erp_id IN (SELECT erp_id FROM erp_cxc_cxp WHERE folio_factura LIKE 'DEMO-%')`);
+      WHERE erp_id IN (SELECT erp_id FROM erp_cxc_cxp WHERE folio_factura LIKE 'DEMO-%')
+         OR movimiento_id IN (
+           SELECT movimiento_id FROM movimientos_bancarios
+           WHERE referencia IN ('REF-1001','REF-1004','REF-1006','REF-1010')
+         )`);
 
     await client.query(`
       DELETE FROM movimientos_bancarios
