@@ -74,6 +74,8 @@ function pintarTabla(movs) {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${formatFecha(m.fecha)}</td>
+      <td>${formatFecha(m.fecha_emision)}</td>
+      <td>${formatFecha(m.fecha_vencimiento)}</td>
       <td>${m.referencia || '—'}</td>
       <td>${formatMXN(m.monto)}</td>
       <td>${m.tipo || '—'}</td>

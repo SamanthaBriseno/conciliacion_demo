@@ -190,7 +190,9 @@ app.get('/api/movimientos', async (req, res) => {
         c.causa_excepcion,
         c.regla_aplicada,
         c.tiempo_conciliacion_ms,
-        e.folio_factura
+        e.folio_factura,
+        e.fecha_emision,
+        e.fecha_vencimiento
       FROM movimientos_bancarios m
       LEFT JOIN conciliaciones c ON c.movimiento_id = m.movimiento_id
       LEFT JOIN erp_cxc_cxp e ON e.erp_id = c.erp_id
