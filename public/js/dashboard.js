@@ -17,6 +17,7 @@ document.querySelectorAll('.tab-btn').forEach((btn) => {
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById(`tab-${btn.dataset.tab}`).classList.add('active');
+    logAction(`navegacion: tab ${btn.dataset.tab}`);
     if (btn.dataset.tab === 'dashboard') cargarDashboard();
   });
 });
@@ -24,6 +25,7 @@ document.querySelectorAll('.tab-btn').forEach((btn) => {
 // ---------- Cargar KPIs + tabla ----------
 async function cargarDashboard() {
   const clienteId = document.getElementById('cliente-tablero').value;
+  logAction(`dashboard: cargar KPIs cliente=${clienteId}`);
   try {
     const [kpis, movs] = await Promise.all([
       fetch(`${API_KPIS}?cliente_id=${clienteId}`).then(r => r.json()),
@@ -187,6 +189,7 @@ function agruparPorFecha(movs) {
 // ---------- Recomendaciones IA ----------
 async function cargarIAGuardada() {
   const clienteId = document.getElementById('cliente-ia').value;
+  logAction(`ia: cargar analisis guardado cliente=${clienteId}`);
   const content = document.getElementById('ia-content');
   const errBox  = document.getElementById('ia-error');
   const empty   = document.getElementById('ia-empty');
@@ -210,6 +213,7 @@ async function cargarIAGuardada() {
 
 async function cargarIA() {
   const clienteId = document.getElementById('cliente-ia').value;
+  logAction(`ia: generar nuevo analisis cliente=${clienteId}`);
   const btn     = document.getElementById('btn-ia-refresh');
   const loading = document.getElementById('ia-loading');
   const content = document.getElementById('ia-content');
@@ -231,8 +235,10 @@ async function cargarIA() {
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     const data = await r.json();
     renderIA(data, true);
+    logAction('ia: analisis generado exitosamente');
     content.classList.remove('hidden');
   } catch (err) {
+    logAction(`ia: error generando analisis - ${err.message}`);
     errBox.innerHTML = `<div class="ia-error-box">❌ <strong>Error:</strong> ${err.message}<br><small>Asegúrate de que Ollama esté corriendo: <code>ollama serve</code></small></div>`;
   } finally {
     loading.classList.add('hidden');
@@ -361,6 +367,7 @@ document.getElementById('btn-reset-demo')?.addEventListener('click', async () =>
   const preview = document.getElementById('config-facturas-preview');
 
   if (!confirm('¿Ejecutar reset de demo? Se borrarán los movimientos y conciliaciones de los casos DEMO-*.')) return;
+  logAction('config: ejecutar reset demo');
 
   btn.disabled = true;
   btn.textContent = '⏳ Ejecutando...';
@@ -392,8 +399,10 @@ document.getElementById('btn-reset-demo')?.addEventListener('click', async () =>
       <span class="config-stat">Conciliaciones históricas: <strong>${data.conciliaciones_historicas}</strong></span>
       <span class="config-stat">Resultados históricos: <strong>${data.resultados_historicos}</strong></span>`;
     result.classList.remove('hidden');
+    logAction('config: reset demo exitoso');
 
   } catch (err) {
+    logAction(`config: error reset demo - ${err.message}`);
     result.className = 'config-result-err';
     result.innerHTML = `❌ <strong>Error:</strong> ${err.message}`;
     result.classList.remove('hidden');

@@ -14,7 +14,7 @@ const clienteSelect = document.getElementById('cliente-select');
 let archivoSeleccionado = null;
 
 // ---------- Drag & drop ----------
-dropZone.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('click', () => { fileInput.click(); logAction('click: abrir selector de archivo'); });
 
 dropZone.addEventListener('dragover', (e) => {
   e.preventDefault();
@@ -30,6 +30,7 @@ dropZone.addEventListener('drop', (e) => {
   dropZone.classList.remove('dragover');
   const file = e.dataTransfer.files[0];
   if (file) manejarArchivo(file);
+  logAction('drag&drop: archivo soltado en zona');
 });
 
 fileInput.addEventListener('change', (e) => {
@@ -46,6 +47,7 @@ function manejarArchivo(file) {
   archivoSeleccionado = file;
   fileName.textContent = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
   btnSubmit.disabled = false;
+  logAction(`archivo seleccionado: ${file.name}`);
 
   const url = URL.createObjectURL(file);
   pdfFrame.src = url;
@@ -59,6 +61,7 @@ btnSubmit.addEventListener('click', async () => {
   btnSubmit.disabled = true;
   btnSubmit.textContent = 'Procesando…';
   resultado.classList.add('hidden');
+  logAction(`click: enviar y conciliar - ${archivoSeleccionado.name}`);
 
   try {
     const clienteId = clienteSelect ? clienteSelect.value : '';
@@ -86,10 +89,12 @@ btnSubmit.addEventListener('click', async () => {
 
     const data = await resp.json();
     console.log('✅ Respuesta:', data);
+    logAction(`conciliacion completada: resultado=${data.resultado || 'pendiente'}`);
     mostrarResultado(data);
 
   } catch (err) {
     console.error('❌ Error:', err);
+    logAction(`error en conciliacion: ${err.message}`);
     resultado.className = 'resultado error';
     resultado.innerHTML = `<h4>Error al procesar</h4><p>${err.message}</p>`;
     resultado.classList.remove('hidden');

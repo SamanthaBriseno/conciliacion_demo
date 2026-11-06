@@ -10,8 +10,21 @@ const API_MOVIMIENTOS   = `${BASE_URL}/api/movimientos`;
 const API_IA            = `${BASE_URL}/api/ia-recomendaciones`;
 const API_RESET_DEMO    = `${BASE_URL}/api/reset-demo`;
 
+const API_LOGS = `${BASE_URL}/api/logs`;
+
 // Cliente demo
 const CLIENTE_ID = '11111111-1111-1111-1111-111111111111';
+
+// Session ID único por visita
+const SESSION_ID = crypto.randomUUID();
+
+function logAction(accion) {
+  fetch(API_LOGS, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ session_id: SESSION_ID, accion }),
+  }).catch(() => {});
+}
 
 // Helpers
 const formatMXN = (n) =>

@@ -405,7 +405,25 @@ Sé específico. Menciona las causas principales y sugiere acciones concretas de
 });
 
 // ============================================================
-// ENDPOINT 5: Reset demo
+// ENDPOINT 5: Log de actividad
+// ============================================================
+app.post('/api/logs', async (req, res) => {
+  const { session_id, accion } = req.body;
+  if (!session_id || !accion) return res.status(400).json({ error: 'Faltan campos' });
+  try {
+    await pool.query(
+      'INSERT INTO user_activity_logs (session_id, accion) VALUES ($1, $2)',
+      [session_id, accion]
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('❌ Error log:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============================================================
+// ENDPOINT 6: Reset demo
 // ============================================================
 app.post('/api/reset-demo', async (req, res) => {
   const client = await pool.connect();
