@@ -10,6 +10,20 @@ const path = require('path');
 const fs = require('fs');
 const { Pool } = require('pg');
 
+async function runMigrations(pool) {
+  const dir = path.join(__dirname, 'migrations');
+  if (!fs.existsSync(dir)) return;
+  const files = fs.readdirSync(dir).filter(f => f.endsWith('.sql')).sort();
+  for (const file of files) {
+    try {
+      await pool.query(fs.readFileSync(path.join(dir, file), 'utf8'));
+      console.log(`✅ Migración: ${file}`);
+    } catch (e) {
+      console.error(`❌ Migración ${file}:`, e.message);
+    }
+  }
+}
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -494,7 +508,7 @@ app.post('/api/reset-demo', async (req, res) => {
 // ============================================================
 // INICIO
 // ============================================================
-app.listen(PORT, () => {
+runMigrations(pool).then(() => app.listen(PORT, () => {
   console.log('============================================================');
   console.log(`🚀 Servidor Express escuchando en http://localhost:${PORT}`);
   console.log(`📁 Sirviendo frontend desde ./public`);
@@ -502,4 +516,4 @@ app.listen(PORT, () => {
   console.log(`🗄️  Postgres: ${process.env.PG_DATABASE}@${process.env.PG_HOST}:${process.env.PG_PORT}`);
   console.log(`🤖 Ollama: ${process.env.OLLAMA_URL} (${process.env.OLLAMA_MODEL})`);
   console.log('============================================================');
-});
+}));

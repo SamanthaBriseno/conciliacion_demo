@@ -19,8 +19,14 @@ document.querySelectorAll('.tab-btn').forEach((btn) => {
     document.getElementById(`tab-${btn.dataset.tab}`).classList.add('active');
     logAction(`navegacion: tab ${btn.dataset.tab}`);
     if (btn.dataset.tab === 'dashboard') cargarDashboard();
+    if (btn.dataset.tab === 'ia') cargarIAGuardada();
   });
 });
+
+// Carga automática al abrir la página si el tab activo es dashboard
+if (document.querySelector('.tab-btn[data-tab="dashboard"]')?.classList.contains('active')) {
+  cargarDashboard();
+}
 
 // ---------- Cargar KPIs + tabla ----------
 async function cargarDashboard() {
@@ -352,13 +358,6 @@ function renderIA(data, esNuevo) {
 document.getElementById('cliente-tablero')?.addEventListener('change', cargarDashboard);
 document.getElementById('btn-ia-refresh')?.addEventListener('click', cargarIA);
 document.getElementById('cliente-ia')?.addEventListener('change', cargarIAGuardada);
-
-// Cargar última recomendación al abrir el tab IA
-document.querySelectorAll('.tab-btn').forEach((btn) => {
-  if (btn.dataset.tab === 'ia') {
-    btn.addEventListener('click', cargarIAGuardada);
-  }
-});
 
 // ---------- Reset demo ----------
 document.getElementById('btn-reset-demo')?.addEventListener('click', async () => {
